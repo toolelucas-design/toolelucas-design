@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ULTIMATE Dih🥀 Golf: Precision Update</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        body {
+            font-family: 'Fredoka One', cursive, sans-serif;
+            text-align: center;
+            background-color: #0f151c;
+            color: white;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 95%;
+            max-width: 800px;
+            margin: 20px auto;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.3), 0 0 10px rgba(0, 242, 254, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 800/500;
+            background: #000;
+            border: 4px solid #34495e;
+        }
+
+        #golfCanvas {
+            background-color: #5D9E45;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* --- INTRO OVERLAYS --- */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 50; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            overflow: hidden;
+        }
+
+        /* Story Intro */
+        #introStoryOverlay { background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); }
+        .intro-speech {
+            font-size: 3rem; color: #f1c40f; text-shadow: 4px 4px 0 #000;
+            background: rgba(0,0,0,0.8); padding: 20px 40px; border-radius: 50px;
+            border: 4px solid #fff; opacity: 0; transform: scale(0);
+            position: relative; top: -50px;
+        }
+        .intro-ball {
+            width: 40px; height: 40px; background: white; border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255,255,255,0.8);
+            position: absolute; left: -100px; bottom: 100px;
+            display: flex; justify-content: center; align-items: center; font-size: 24px;
+        }
+        .intro-ball::after { content: "🍆"; }
+
+        /* Free Roam Intro */
+        #introFreeRoamOverlay { background: #2c3e50; }
+        
+        .actor { position: absolute; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
+        #frBall { 
+            width: 50px; height: 50px; background: #fff; border-radius: 50%; 
+            bottom: 150px; left: -100px; display: flex; justify-content: center; align-items: center; font-size: 28px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+        #frBall::after { content: "🍆"; }
+
+        #frClubNormal {
+            width: 12px; height: 140px; background: linear-gradient(to right, #95a5a6, #bdc3c7); 
+            bottom: 150px; right: -100px; transform: rotate(-10deg);
+            z-index: 1; border-radius: 5px;
+        }
+        #frClubNormal::before { 
+            content: ""; position: absolute; bottom: 0; left: -20px; 
+            width: 40px; height: 25px; background: #7f8c8d; 
+            border-radius: 8px 8px 20px 8px; 
+            border-bottom: 2px solid #555;
+        }
+
+        #frClubDih {
+            width: 14px; height: 160px; background: linear-gradient(to top, #2c3e50, #00f2fe);
+            bottom: 150px; right: -100px; transform: rotate(-10deg);
+            box-shadow: 0 0 15px #00f2fe; z-index: 3; border-radius: 5px;
+        }
+        #frClubDih::before { 
+            content: ""; position: absolute; bottom: 0; left: -25px; 
+            width: 50px; height: 30px; background: #333; 
+            border-radius: 5px; border: 2px solid #00f2fe;
+        }
+
+        .speech-bubble {
+            position: absolute; background: #fff; color: #000; padding: 15px 25px;
+            border-radius: 20px; font-size: 1.3rem; max-width: 250px; text-align: center;
+            opacity: 0; transform: scale(0.5); transition: opacity 0.2s, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 3px solid #333; box-shadow: 5px 5px 0 rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        /* Little triangle for speech bubble */
+        .speech-bubble::after {
+            content: ''; position: absolute; width: 0; height: 0;
+            border: 10px solid transparent;
+        }
+        
+        .sb-left { bottom: 230px; left: 80px; }
+        .sb-left::after { border-top-color: #333; bottom: -23px; left: 20px; }
+
+        .sb-right { bottom: 300px; right: 120px; }
+        .sb-right::after { border-top-color: #333; bottom: -23px; right: 20px; }
+
+        /* Animation Classes */
+        .slide-in-left { left: 15% !important; transform: rotate(360deg) !important; }
+        .slide-in-right { right: 20% !important; }
+        .pop-in { opacity: 1 !important; transform: scale(1) !important; }
+
+        /* --- GENERAL UI --- */
+        #splashOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: none; z-index: 20;
+            background: rgba(0, 20, 40, 0.6); backdrop-filter: blur(5px);
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .splash-text { font-size: 5rem; color: #fff; text-shadow: 0 0 15px #00f2fe; animation: floatText 2s infinite; }
+        .droplet { position: absolute; border-radius: 50%; animation: drip 2s forwards; }
+        .droplet.water { background: rgba(0, 242, 254, 0.8); }
+        .droplet.lava { background: rgba(255, 69, 0, 0.9); box-shadow: 0 0 10px #ff4500; }
+
+        @keyframes floatText { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-15px) rotate(2deg); } }
+        @keyframes drip { 0% { transform: scale(0); opacity: 0; } 10% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.1) translateY(100px); opacity: 0; } }
+
+        #titleScreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a2634 0%, #000000 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;
+        }
+        .title-text { font-size: 4rem; margin-bottom: 5px; background: linear-gradient(180deg, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.8)); animation: bounceIn 1s; }
+        .title-sub { font-size: 1.5rem; color: #fff; margin-bottom: 40px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        
+        .menu-btn { background: linear-gradient(180deg, #2ecc71, #27ae60); color: white; border: none; padding: 15px 40px; font-size: 1.5rem; font-family: 'Fredoka One', cursive; border-radius: 15px; margin: 10px; cursor: pointer; box-shadow: 0 6px 0 #1e8449; width: 280px; transition: transform 0.1s; }
+        .menu-btn:active { transform: translateY(6px); box-shadow: 0 0 0; }
+        .menu-btn.story { background: linear-gradient(180deg, #e67e22, #d35400); box-shadow: 0 6px 0 #a04000; }
+
+        #victoryOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 40; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .victory-title { font-size: 4rem; color: #f1c40f; text-shadow: 0 0 20px #e67e22; margin-bottom: 20px; animation: bounceIn 1s infinite; }
+        .trophy { font-size: 6rem; margin-bottom: 20px; filter: drop-shadow(0 0 15px gold); }
+
+        #ui-layer { background: rgba(15, 21, 28, 0.9); border-top: 4px solid #00f2fe; padding: 10px; display: none; flex-direction: column; gap: 10px; max-width: 800px; margin: 0 auto; }
+        .stats { display: flex; justify-content: space-around; font-size: 1.1rem; color: #ecf0f1; }
+        .stat-value { color: #00f2fe; text-shadow: 0 0 5px rgba(0, 242, 254, 0.5); }
+        .club-selector { display: flex; justify-content: center; gap: 15px; }
+        .club-btn { padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; font-family: 'Fredoka One', cursive; flex: 1; background: #34495e; color: #ecf0f1; box-shadow: 0 4px 0 #2c3e50; }
+        .club-btn.active { background: #00f2fe; color: #000; box-shadow: 0 4px 0 #009eb5, 0 0 15px rgba(0, 242, 254, 0.6); transform: translateY(-2px); }
+        #homeBtn { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.4); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 5px 12px; border-radius: 8px; cursor: pointer; z-index: 5; display: none; font-family: 'Fredoka One', cursive; }
+
+        @keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
+        .anim-roll { animation: rollIn 2s ease-out forwards; }
+        .anim-text { animation: popText 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes rollIn { 0% { left: -50px; transform: rotate(0deg); } 100% { left: 50%; transform: translateX(-50%) rotate(720deg); } }
+        @keyframes popText { 0% { opacity: 0; transform: scale(0); } 100% { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <div id="splashOverlay"><div class="splash-text" id="splashText">Try Again 🥀</div></div>
+
+        <div id="introStoryOverlay" class="overlay">
+            <div id="introSpeech" class="intro-speech">I GOT THIS!</div>
+            <div id="introBall" class="intro-ball"></div>
+        </div>
+
+        <div id="introFreeRoamOverlay" class="overlay">
+            <div id="frBall" class="actor"></div>
+            <div id="frClubNormal" class="actor"></div>
+            <div id="frClubDih" class="actor"></div>
+            <div id="bubble1" class="speech-bubble sb-right">We can do this!</div>
+            <div id="bubble2" class="speech-bubble sb-right" style="border-color: #00f2fe; color: #00f2fe; background: #222;">But it's randomly generated!</div>
+            <div id="bubble3" class="speech-bubble sb-left">Oh :(</div>
+        </div>
+
+        <div id="victoryOverlay">
+            <div class="trophy">🏆</div>
+            <div class="victory-title">LEGEND!</div>
+            <div style="font-size: 1.5rem; color: #fff; margin-bottom: 30px;">You conquered all 10 levels!</div>
+            <button class="menu-btn" onclick="showTitleScreen()">Main Menu</button>
+        </div>
+        
+        <div id="titleScreen">
+            <div class="title-text">ULTIMATE Dih🥀 Golf</div>
+            <div class="title-sub">Precision Update</div>
+            <button class="menu-btn" onclick="playFreeRoamIntro()">Free Roam</button>
+            <button class="menu-btn story" onclick="playStoryIntro()">Story Mode</button>
+        </div>
+
+        <button id="homeBtn" onclick="showTitleScreen()">🏠 Home</button>
+        <canvas id="golfCanvas" width="800" height="500"></canvas>
+    </div>
+
+    <div id="ui-layer">
+        <div class="stats">
+            <div><span id="modeDisplay">Random</span></div>
+            <div>Level: <span id="levelDisplay" class="stat-value">1</span></div>
+            <div>Shots: <span id="shotCount" class="stat-value">0</span></div>
+            <div>Par: <span id="parDisplay" class="stat-value">3</span></div>
+        </div>
+
+        <div class="club-selector">
+            <button id="btnDriver" class="club-btn active" onclick="selectClub('driver')">Laser Driver</button>
+            <button id="btnPutter" class="club-btn" onclick="selectClub('putter')">Laser Putter</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('golfCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- Config ---
+        const FRICTION_GRASS = 0.98; 
+        const FRICTION_SAND = 0.85; 
+        const ANIMATION_SPEED = 25; 
+        
+        const CLUBS = {
+            driver: { powerMulti: 0.25, maxSpeed: 25, accuracyError: 0.25 },
+            putter: { powerMulti: 0.08, maxSpeed: 8, accuracyError: 0.0 }
+        };
+
+        // --- State ---
+        let gameMode = 'random'; 
+        let currentClub = 'driver';
+        let level = 1;
+        let shots = 0;
+        let par = 3;
+        let currentLevelName = "";
+        
+        let isDragging = false;
+        let startX, startY, currentDragX, currentDragY; 
+        let isAnimatingSwing = false;
+        let swingFrame = 0;
+        let pendingShot = null;
+        let globalTime = 0; 
+        
+        let ball = { x: 50, y: 250, radius: 7, vx: 0, vy: 0, isMoving: false };
+        let hole = { x: 700, y: 250, radius: 12 };
+        
+        // Objects
+        let trees = [];
+        let lakes = [];
+        let sands = [];
+        let woodPlanks = []; 
+        let rocks = [];      
+        let windmills = [];
+        let tents = [];
+
+        let isCelebrating = false;
+        let isSplashing = false; 
+        let particles = [];
+        let celebrationText = "";
+        let celebrationColor = "";
+        let celebrationTimer = 0;
+
+        let grassPattern, sandPattern;
+
+        // --- ASSETS ---
+        function createPatterns() {
+            const cGrass = document.createElement('canvas'); cGrass.width = 256; cGrass.height = 256;
+            const ctxGrass = cGrass.getContext('2d');
+            ctxGrass.fillStyle = "#2e7d32"; ctxGrass.fillRect(0,0,256,256); 
+            for(let i=0; i<6000; i++) {
+                ctxGrass.fillStyle = Math.random() > 0.5 ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.2)";
+                ctxGrass.beginPath(); ctxGrass.arc(Math.random()*256, Math.random()*256, Math.random()*2, 0, Math.PI*2); ctxGrass.fill();
+            }
+            grassPattern = ctx.createPattern(cGrass, 'repeat');
+
+            const cSand = document.createElement('canvas'); cSand.width = 100; cSand.height = 100;
+            const ctxSand = cSand.getContext('2d');
+            ctxSand.fillStyle = "#F4D03F"; ctxSand.fillRect(0,0,100,100);
+            for(let i=0; i<500; i++) {
+                ctxSand.fillStyle = "rgba(160, 82, 45, 0.2)"; 
+                ctxSand.fillRect(Math.random()*100, Math.random()*100, 2, 2);
+            }
+            sandPattern = ctx.createPattern(cSand, 'repeat');
+        }
+
+        // --- INTROS ---
+        function playStoryIntro() {
+            document.getElementById('titleScreen').style.display = 'none';
+            const intro = document.getElementById('introStoryOverlay');
+            const ballElem = document.getElementById('introBall');
+            const textElem = document.getElementById('introSpeech');
+            intro.style.display = 'flex';
+            ballElem.classList.remove('anim-roll'); textElem.classList.remove('anim-text');
+            void ballElem.offsetWidth; 
+            ballElem.classList.add('anim-roll'); textElem.classList.add('anim-text');
+            setTimeout(() => {
+                intro.style.display = 'none';
+                startGame('story');
+            }, 3000);
+        }
+
+        function playFreeRoamIntro() {
+            document.getElementById('titleScreen').style.display = 'none';
+            const intro = document.getElementById('introFreeRoamOverlay');
+            const b = document.getElementById('frBall');
+            const c1 = document.getElementById('frClubNormal');
+            const c2 = document.getElementById('frClubDih');
+            const bub1 = document.getElementById('bubble1');
+            const bub2 = document.getElementById('bubble2');
+            const bub3 = document.getElementById('bubble3');
+
+            b.className = 'actor'; c1.className = 'actor'; c2.className = 'actor';
+            bub1.className = 'speech-bubble sb-right'; bub2.className = 'speech-bubble sb-right'; bub3.className = 'speech-bubble sb-left';
+            b.style.left = '-100px'; c1.style.right = '-100px'; c2.style.right = '-100px';
+            
+            intro.style.display = 'flex';
+
+            setTimeout(() => { b.classList.add('slide-in-left'); }, 100); 
+            setTimeout(() => { c1.classList.add('slide-in-right'); }, 800); 
+            setTimeout(() => { bub1.classList.add('pop-in'); }, 1400); 
+            
+            setTimeout(() => { 
+                bub1.classList.remove('pop-in'); 
+                c1.style.right = '-100px'; 
+            }, 3000);
+
+            setTimeout(() => { c2.classList.add('slide-in-right'); }, 3500); 
+            setTimeout(() => { bub2.classList.add('pop-in'); }, 4000); 
+            
+            setTimeout(() => { 
+                bub2.classList.remove('pop-in'); 
+                bub3.classList.add('pop-in'); 
+            }, 6000);
+
+            setTimeout(() => {
+                intro.style.display = 'none';
+                startGame('random');
+            }, 8000);
+        }
+
+        function startGame(mode) {
+            gameMode = mode;
+            document.getElementById('titleScreen').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'flex';
+            document.getElementById('homeBtn').style.display = 'block';
+            level = 1;
+            if (mode === 'story') loadStoryLevel(1);
+            else generateLevel(1);
+        }
+
+        function showTitleScreen() {
+            document.getElementById('titleScreen').style.display = 'flex';
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('homeBtn').style.display = 'none';
+            document.getElementById('victoryOverlay').style.display = 'none';
+            ball.isMoving = false; isCelebrating = false; isAnimatingSwing = false; isSplashing = false;
+            document.getElementById('splashOverlay').style.display = 'none';
+        }
+
+        function nextLevel() {
+            level++;
+            if (gameMode === 'story') {
+                if (level > 10) showVictoryScreen();
+                else loadStoryLevel(level);
+            } else {
+                generateLevel(level);
+            }
+        }
+
+        function showVictoryScreen() {
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('victoryOverlay').style.display = 'flex';
+        }
+
+        function selectClub(clubName) {
+            if(ball.isMoving || isAnimatingSwing || isCelebrating || isSplashing) return;
+            currentClub = clubName;
+            document.querySelectorAll('.club-btn').forEach(btn => btn.classList.remove('active'));
+            if(clubName === 'driver') document.getElementById('btnDriver').classList.add('active');
+            else document.getElementById('btnPutter').classList.add('active');
+        }
+
+        function triggerSplash(type) {
+            if(isSplashing) return;
+            isSplashing = true; ball.isMoving = false; ball.vx = 0; ball.vy = 0;
+            const overlay = document.getElementById('splashOverlay');
+            const txt = document.getElementById('splashText');
+            overlay.style.display = 'flex';
+            
+            if(type === 'lava') {
+                txt.textContent = "MELTED 🥀"; txt.style.color = "#ff4500"; txt.style.textShadow = "0 0 20px #ff0000";
+            } else {
+                txt.textContent = "SPLASH 🥀"; txt.style.color = "#fff"; txt.style.textShadow = "0 0 20px #00f2fe";
+            }
+
+            const oldDroplets = overlay.querySelectorAll('.droplet');
+            oldDroplets.forEach(d => d.remove());
+            for(let i=0; i<20; i++) {
+                const drop = document.createElement('div'); drop.classList.add('droplet');
+                drop.classList.add(type === 'lava' ? 'lava' : 'water');
+                const size = 30 + Math.random() * 80;
+                drop.style.width = size + 'px'; drop.style.height = size + 'px';
+                drop.style.left = (Math.random() * 100) + '%'; drop.style.top = (Math.random() * 100) + '%';
+                drop.style.animationDelay = (Math.random() * 0.5) + 's';
+                overlay.appendChild(drop);
+            }
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                shots++; document.getElementById('shotCount').textContent = shots;
+                resetBallPos();
+                isSplashing = false;
+            }, 2500);
+        }
+
+        function resetLevelState() {
+            ball.vx = 0; ball.vy = 0; ball.isMoving = false;
+            shots = 0; document.getElementById('shotCount').textContent = shots;
+            isCelebrating = false; isSplashing = false;
+            trees = []; lakes = []; sands = []; woodPlanks = []; rocks = []; windmills = []; tents = [];
+        }
+
+        function resetBallPos() {
+            if(gameMode === 'story') {
+                if(level === 1) { ball.x = 30; ball.y = 250; }
+                else if(level === 2) { ball.x = 30; ball.y = 250; }
+                else if(level === 3) { ball.x = 30; ball.y = 250; }
+                else if(level === 4) { ball.x = 50; ball.y = 50; }
+                else if(level === 5) { ball.x = 30; ball.y = 50; }
+                else if(level === 6) { ball.x = 30; ball.y = 250; } 
+                else if(level === 7) { ball.x = 50; ball.y = 450; } 
+                else if(level === 8) { ball.x = 30; ball.y = 250; } 
+                else if(level === 9) { ball.x = 50; ball.y = 450; } 
+                else if(level === 10) { ball.x = 30; ball.y = 50; } 
+            } else {
+                ball.x = 50; ball.y = 250;
+            }
+        }
+
+        // --- STORY LEVELS ---
+        function loadStoryLevel(lvlIdx) {
+            resetLevelState();
+            document.getElementById('levelDisplay').textContent = lvlIdx;
+            if (lvlIdx === 1) {
+                currentLevelName = "The Forest"; resetBallPos(); hole.x = 760; hole.y = 250; par = 4;
+                for(let x=100; x<700; x+=50) { trees.push(createTree(x, 100 + Math.random()*50, 25)); trees.push(createTree(x, 350 + Math.random()*50, 25)); }
+                rocks.push({x: 300, y: 250, radius: 25}); rocks.push({x: 500, y: 250, radius: 25});
+            } else if (lvlIdx === 2) {
+                currentLevelName = "The Springs"; resetBallPos(); hole.x = 760; hole.y = 250; par = 4;
+                lakes.push({x: 200, y: 150, radius: 70, type: 'water'}); lakes.push({x: 200, y: 350, radius: 70, type: 'water'});
+                lakes.push({x: 400, y: 250, radius: 90, type: 'water'}); 
+                lakes.push({x: 600, y: 150, radius: 70, type: 'water'}); lakes.push({x: 600, y: 350, radius: 70, type: 'water'});
+                sands.push({x: 400, y: 400, radius: 40});
+            } else if (lvlIdx === 3) {
+                currentLevelName = "The Carnival"; resetBallPos(); hole.x = 750; hole.y = 250; par = 5;
+                windmills.push({x: 250, y: 250, angle: 0, speed: 0.06}); tents.push({x: 400, y: 150, w: 70, h: 70}); tents.push({x: 400, y: 350, w: 70, h: 70});
+                for(let y=0; y<=500; y+=40) lakes.push({x: 600, y: y, radius: 40, type: 'water'}); woodPlanks.push({x: 550, y: 230, w: 100, h: 40}); 
+            } else if (lvlIdx === 4) {
+                currentLevelName = "The VOLCANO"; resetBallPos(); hole.x = 750; hole.y = 450; par = 5;
+                lakes.push({x: 400, y: 250, radius: 200, type: 'lava'}); rocks.push({x: 100, y: 250, radius: 30}); rocks.push({x: 700, y: 250, radius: 30}); trees.push(createTree(400, 20, 20)); sands.push({x: 700, y: 400, radius: 40}); 
+            } else if (lvlIdx === 5) {
+                currentLevelName = "The END (Part 1)"; resetBallPos(); hole.x = 770; hole.y = 450; par = 8;
+                trees.push(createTree(150, 150, 25)); trees.push(createTree(150, 350, 25)); lakes.push({x: 300, y: 100, radius: 55, type: 'lava'}); lakes.push({x: 300, y: 400, radius: 55, type: 'lava'});
+                windmills.push({x: 450, y: 250, angle: 0, speed: 0.08}); tents.push({x: 450, y: 80, w: 50, h: 50}); tents.push({x: 450, y: 420, w: 50, h: 50});
+                for(let y=0; y<=500; y+=40) lakes.push({x: 600, y: y, radius: 35, type: 'water'}); woodPlanks.push({x: 550, y: 100, w: 100, h: 40}); rocks.push({x: 700, y: 400, radius: 25});
+            } else if (lvlIdx === 6) {
+                currentLevelName = "The Canyon"; resetBallPos(); hole.x = 750; hole.y = 250; par = 4;
+                for(let x=100; x<700; x+=60) { rocks.push({x: x, y: 100, radius: 25}); rocks.push({x: x, y: 400, radius: 25}); } sands.push({x: 300, y: 250, radius: 40}); sands.push({x: 500, y: 250, radius: 40});
+            } else if (lvlIdx === 7) {
+                currentLevelName = "Island Hopping"; resetBallPos(); hole.x = 750; hole.y = 50; par = 5;
+                for(let x=0; x<=800; x+=50) { for(let y=0; y<=500; y+=50) {
+                        let isIsland1 = (x < 200 && y > 300); let isIsland2 = (x > 300 && x < 500 && y > 200 && y < 350); let isIsland3 = (x > 600 && y < 200);
+                        if(!isIsland1 && !isIsland2 && !isIsland3) lakes.push({x: x, y: y, radius: 30, type: 'water'});
+                }} woodPlanks.push({x: 180, y: 320, w: 140, h: 40}); woodPlanks.push({x: 480, y: 220, w: 140, h: 40});
+            } else if (lvlIdx === 8) {
+                currentLevelName = "Turbine Row"; resetBallPos(); hole.x = 750; hole.y = 250; par = 5;
+                for(let y=100; y<=400; y+=150) windmills.push({x: 250, y: y, angle: 0, speed: 0.05}); for(let y=100; y<=400; y+=150) windmills.push({x: 450, y: y, angle: 1, speed: -0.05}); for(let y=100; y<=400; y+=150) windmills.push({x: 650, y: y, angle: 0, speed: 0.08});
+            } else if (lvlIdx === 9) {
+                currentLevelName = "The Fortress"; resetBallPos(); hole.x = 700; hole.y = 250; par = 6;
+                lakes.push({x: 700, y: 250, radius: 120, type: 'lava'}); woodPlanks.push({x: 630, y: 180, w: 10, h: 140}); woodPlanks.push({x: 770, y: 180, w: 10, h: 140}); woodPlanks.push({x: 630, y: 180, w: 150, h: 10}); woodPlanks.push({x: 630, y: 310, w: 150, h: 10}); woodPlanks.pop(); woodPlanks.shift(); woodPlanks.push({x: 630, y: 180, w: 10, h: 50}); woodPlanks.push({x: 630, y: 270, w: 10, h: 50}); rocks.push({x: 400, y: 250, radius: 30}); 
+            } else if (lvlIdx === 10) {
+                currentLevelName = "The Impossible"; resetBallPos(); hole.x = 750; hole.y = 450; par = 10;
+                for(let x=0; x<=800; x+=60) { for(let y=0; y<=500; y+=60) { lakes.push({x: x, y: y, radius: 35, type: 'lava'}); } }
+                woodPlanks.push({x: 30, y: 50, w: 200, h: 50}); woodPlanks.push({x: 230, y: 50, w: 50, h: 200}); woodPlanks.push({x: 230, y: 250, w: 300, h: 50}); woodPlanks.push({x: 530, y: 250, w: 50, h: 200}); woodPlanks.push({x: 530, y: 450, w: 220, h: 50}); windmills.push({x: 380, y: 275, angle: 0, speed: 0.1}); tents.push({x: 600, y: 350, w: 40, h: 40});
+            }
+            document.getElementById('modeDisplay').textContent = currentLevelName;
+            document.getElementById('parDisplay').textContent = par;
+        }
+
+        // --- RANDOM GENERATION (Free Roam) ---
+        function generateLevel(lvl) {
+            resetLevelState();
+            ball.x = 50; ball.y = 250;
+            hole.x = 600 + Math.random() * 150; hole.y = 50 + Math.random() * 400;
+            document.getElementById('levelDisplay').textContent = lvl;
+            const roll = Math.random();
+            let typeName = "Standard";
+
+            // BALANCED PROBABILITIES
+            if (roll < 0.25) { 
+                typeName = "River Crossing";
+                let riverX = 300 + Math.random() * 200;
+                for(let y = 0; y <= 500; y+=40) lakes.push({x: riverX + (Math.random()-0.5)*20, y: y, radius: 35, type: 'water'});
+                woodPlanks.push({x: riverX - 60, y: 200 + Math.random() * 100, w: 120, h: 50});
+                par = 3;
+            } else if (roll < 0.50) { // 25% Chance for Windmills
+                typeName = "Windmill Farm";
+                const numWindmills = 3 + Math.floor(lvl / 2);
+                for(let i=0; i<numWindmills; i++) {
+                    let placed = false, attempts = 0;
+                    while(!placed && attempts < 200) {
+                        let x = 150 + Math.random() * 550; let y = 50 + Math.random() * 400;
+                        if(isPositionValid(x, y, 40)) { windmills.push({x:x, y:y, angle: Math.random() * Math.PI, speed: 0.02 + Math.random()*0.03}); placed = true; }
+                        attempts++;
+                    }
+                }
+                par = 4;
+            } else { // 50% Standard/Forest
+                typeName = "Dense Forest";
+                const numTrees = 5 + Math.floor(lvl * 1.5);
+                const numLakes = Math.min(3, Math.floor(lvl / 1.5));
+                const numRocks = 4 + Math.floor(lvl); 
+                for(let i=0; i<numLakes; i++) spawnObj(lakes, 30, 60, 'lake');
+                for(let i=0; i<numTrees; i++) spawnObj(trees, 15, 40, 'tree');
+                for(let i=0; i<numRocks; i++) spawnObj(rocks, 10, 25);
+                par = 3 + Math.floor((trees.length + lakes.length)/5);
+            }
+            document.getElementById('modeDisplay').textContent = typeName;
+            document.getElementById('parDisplay').textContent = par;
+        }
+
+        // --- HELPERS ---
+        function createTree(x, y, r) {
+            let puffs = [];
+            for(let i=0; i<6; i++) { puffs.push({ dx: (Math.random()-0.5)*r, dy: (Math.random()-0.5)*r, dr: r * (0.6 + Math.random()*0.4), color: Math.random() > 0.5 ? "#2ecc71" : "#27ae60" }); }
+            return {x, y, radius: r, puffs};
+        }
+        function isPositionValid(x, y, radius) {
+            if (dist(x, y, ball.x, ball.y) < radius + 80) return false;
+            if (dist(x, y, hole.x, hole.y) < radius + 60) return false;
+            for (let t of trees) if (dist(x, y, t.x, t.y) < radius + t.radius + 15) return false;
+            for (let l of lakes) if (dist(x, y, l.x, l.y) < radius + l.radius + 15) return false;
+            return true;
+        }
+        function spawnObj(arr, minR, maxR, type) {
+            let placed = false, attempts = 0;
+            while(!placed && attempts < 200) {
+                let r = minR + Math.random() * (maxR-minR); let x = 150 + Math.random() * 550; let y = 50 + Math.random() * 400;
+                if(isPositionValid(x, y, r)) { if(type === 'tree') arr.push(createTree(x, y, r)); else if(type === 'lake') arr.push({x:x, y:y, radius:r, type: 'water'}); else arr.push({x:x, y:y, radius:r}); placed = true; } attempts++;
+            }
+        }
+        function dist(x1, y1, x2, y2) { return Math.hypot(x1 - x2, y1 - y2); }
+        function getScaledCoords(e) {
+            const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
+            const clientX = e.clientX || e.touches[0].clientX; const clientY = e.clientY || e.touches[0].clientY;
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        // --- PHYSICS ---
+        function updatePhysics() {
+            if (isCelebrating) { updateCelebration(); return; }
+            if (isSplashing) return;
+            globalTime += 0.05; windmills.forEach(w => w.angle += w.speed);
+            if (isAnimatingSwing) {
+                swingFrame++;
+                if (swingFrame > ANIMATION_SPEED) { isAnimatingSwing = false; ball.vx = pendingShot.vx; ball.vy = pendingShot.vy; ball.isMoving = true; shots++; document.getElementById('shotCount').textContent = shots; }
+                return;
+            }
+            if (!ball.isMoving) return;
+            let currentFriction = FRICTION_GRASS; ball.inSand = false;
+            sands.forEach(sand => { if(dist(ball.x, ball.y, sand.x, sand.y) < sand.radius) { currentFriction = FRICTION_SAND; ball.inSand = true; } });
+            let onBridge = false;
+            woodPlanks.forEach(p => { if (ball.x > p.x && ball.x < p.x + p.w && ball.y > p.y && ball.y < p.y + p.h) onBridge = true; });
+            if (!onBridge) { lakes.forEach(lake => { if (dist(ball.x, ball.y, lake.x, lake.y) < lake.radius) { ball.vx *= 0.85; ball.vy *= 0.85; if (Math.hypot(ball.vx, ball.vy) < 1) triggerSplash(lake.type || 'water'); } }); }
+            ball.x += ball.vx; ball.y += ball.vy; ball.vx *= currentFriction; ball.vy *= currentFriction;
+            if (Math.hypot(ball.vx, ball.vy) < 0.05) { ball.vx = 0; ball.vy = 0; ball.isMoving = false; }
+            if (ball.x < ball.radius) { ball.x = ball.radius; ball.vx *= -0.8; } if (ball.x > canvas.width - ball.radius) { ball.x = canvas.width - ball.radius; ball.vx *= -0.8; }
+            if (ball.y < ball.radius) { ball.y = ball.radius; ball.vy *= -0.8; } if (ball.y > canvas.height - ball.radius) { ball.y = canvas.height - ball.radius; ball.vy *= -0.8; }
+            trees.forEach(tree => handleCircleCollision(tree, 0.7)); rocks.forEach(rock => handleCircleCollision(rock, 1.2)); 
+            tents.forEach(t => { if (ball.x > t.x - t.w/2 - ball.radius && ball.x < t.x + t.w/2 + ball.radius && ball.y > t.y - t.h/2 - ball.radius && ball.y < t.y + t.h/2 + ball.radius) { ball.vx *= -0.8; ball.vy *= -0.8; } });
+            windmills.forEach(w => {
+                if (dist(ball.x, ball.y, w.x, w.y) < 15 + ball.radius) handleCircleCollision({x:w.x, y:w.y, radius:15}, 0.5);
+                for(let i=0; i<4; i++) {
+                    let bladeAngle = w.angle + (i * Math.PI/2); let bx = w.x + Math.cos(bladeAngle) * 60; let by = w.y + Math.sin(bladeAngle) * 60;
+                    let d = distToSegment(ball.x, ball.y, w.x, w.y, bx, by); if (d < ball.radius + 2) { ball.vx += Math.cos(bladeAngle + Math.PI/2) * 5; ball.vy += Math.sin(bladeAngle + Math.PI/2) * 5; }
+                }
+            });
+            if (dist(ball.x, ball.y, hole.x, hole.y) < hole.radius) { ball.isMoving = false; ball.x = hole.x; ball.y = hole.y; startCelebration(); }
+        }
+        function handleCircleCollision(obj, bounce) {
+            let d = dist(ball.x, ball.y, obj.x, obj.y);
+            if (d < ball.radius + obj.radius) {
+                let nx = (ball.x - obj.x) / d; let ny = (ball.y - obj.y) / d;
+                ball.x = obj.x + nx * (obj.radius + ball.radius); ball.y = obj.y + ny * (obj.radius + ball.radius);
+                let dot = ball.vx * nx + ball.vy * ny; ball.vx = (ball.vx - 2 * dot * nx) * bounce; ball.vy = (ball.vy - 2 * dot * ny) * bounce;
+            }
+        }
+        function distToSegment(px, py, vx, vy, wx, wy) {
+            let l2 = (vx - wx)**2 + (vy - wy)**2; if (l2 == 0) return dist(px, py, vx, vy);
+            let t = ((px - vx) * (wx - vx) + (py - vy) * (wy - vy)) / l2; t = Math.max(0, Math.min(1, t)); return dist(px, py, vx + t * (wx - vx), vy + t * (wy - vy));
+        }
+
+        // --- DRAWING ---
+        function draw() {
+            // Shake effect logic
+            let shakeX = 0, shakeY = 0;
+            // Only shake for Driver (heavy hit)
+            let isDriver = currentClub === 'driver';
+            if (isDriver && isAnimatingSwing && swingFrame >= ANIMATION_SPEED/2 && swingFrame < ANIMATION_SPEED/2 + 5) {
+                 shakeX = (Math.random() - 0.5) * 20; 
+                 shakeY = (Math.random() - 0.5) * 20;
+            }
+            
+            ctx.save();
+            ctx.translate(shakeX, shakeY);
+
+            // Draw Background
+            ctx.fillStyle = grassPattern; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Objects
+            sands.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI*2); ctx.fillStyle = sandPattern; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "rgba(0,0,0,0.1)"; ctx.stroke(); });
+            
+            lakes.forEach(l => {
+                ctx.beginPath(); ctx.arc(l.x, l.y, l.radius, 0, Math.PI*2);
+                if(l.type === 'lava') {
+                    let lGrad = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.radius); lGrad.addColorStop(0, "#e67e22"); lGrad.addColorStop(1, "#c0392b"); ctx.fillStyle = lGrad; ctx.fill();
+                    ctx.beginPath(); ctx.arc(l.x + Math.sin(globalTime)*10, l.y + Math.cos(globalTime)*10, 5, 0, Math.PI*2); ctx.fillStyle = "#f1c40f"; ctx.fill(); ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 4; ctx.stroke();
+                } else {
+                    let wGrad = ctx.createLinearGradient(0, 0, 0, canvas.height); wGrad.addColorStop(0, "rgba(0, 242, 254, 0.7)"); wGrad.addColorStop(1, "rgba(79, 172, 254, 0.7)"); ctx.fillStyle = wGrad; ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.lineWidth = 3; ctx.stroke();
+                }
+            });
+            
+            woodPlanks.forEach(p => { ctx.fillStyle = "#8B4513"; ctx.fillRect(p.x, p.y, p.w, p.h); ctx.strokeStyle = "#3e2723"; ctx.strokeRect(p.x, p.y, p.w, p.h); });
+            
+            drawHoleFancy(hole.x, hole.y, hole.radius);
+            draw3DBall(ball.x, ball.y, ball.radius);
+            
+            trees.forEach(tree => drawTreeFancy(tree.x, tree.y, tree.radius));
+            rocks.forEach(r => { ctx.save(); ctx.translate(r.x, r.y); ctx.beginPath(); ctx.arc(0, 0, r.radius, 0, Math.PI*2); ctx.fillStyle = "#7f8c8d"; ctx.fill(); ctx.strokeStyle = "#555"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); });
+            tents.forEach(t => { ctx.save(); ctx.translate(t.x, t.y); ctx.beginPath(); ctx.moveTo(0, -t.h/2); ctx.lineTo(t.w/2, t.h/2); ctx.lineTo(-t.w/2, t.h/2); ctx.closePath(); ctx.fillStyle = "#ecf0f1"; ctx.fill(); ctx.beginPath(); ctx.moveTo(0, -t.h/2); ctx.lineTo(0, t.h/2); ctx.strokeStyle = "#e74c3c"; ctx.lineWidth = 10; ctx.stroke(); ctx.restore(); });
+            
+            windmills.forEach(w => {
+                ctx.fillStyle = "#ecf0f1"; ctx.beginPath(); ctx.arc(w.x, w.y, 15, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "#bdc3c7"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.save(); ctx.translate(w.x, w.y); ctx.rotate(w.angle); ctx.strokeStyle = "#e74c3c"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-60, 0); ctx.lineTo(60, 0); ctx.moveTo(0, -60); ctx.lineTo(0, 60); ctx.stroke(); ctx.restore();
+                ctx.fillStyle = "#c0392b"; ctx.beginPath(); ctx.arc(w.x, w.y, 5, 0, Math.PI*2); ctx.fill();
+            });
+
+            if (isDragging && !isAnimatingSwing && !isCelebrating && !isSplashing) {
+                ctx.beginPath(); ctx.moveTo(ball.x, ball.y); ctx.lineTo(currentDragX, currentDragY);
+                let grad = ctx.createLinearGradient(ball.x, ball.y, currentDragX, currentDragY); grad.addColorStop(0, "rgba(0, 242, 254, 0.8)"); grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+                ctx.strokeStyle = grad; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
+            }
+
+            if (isAnimatingSwing) drawSwingAnimation();
+            if (isCelebrating) drawCelebration();
+            
+            ctx.restore();
+        }
+
+        // --- DRAW HELPERS ---
+        function draw3DBall(x, y, r) {
+            ctx.beginPath(); ctx.ellipse(x+2, y+2, r, r*0.8, 0, 0, Math.PI*2); ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fill();
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); let grad = ctx.createRadialGradient(x-r/3, y-r/3, r/4, x, y, r); grad.addColorStop(0, "#ffffff"); grad.addColorStop(1, "#bdc3c7"); ctx.fillStyle = grad; ctx.fill(); ctx.strokeStyle = "#7f8c8d"; ctx.lineWidth = 0.5; ctx.stroke();
+            ctx.font = (r * 1.5) + "px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText("🍆", x, y + 2);
+        }
+        function drawHoleFancy(x, y, r) {
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); let grad = ctx.createRadialGradient(x, y, r, x, y, r+2); grad.addColorStop(0, "rgba(0,0,0,0.8)"); grad.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = "#111"; ctx.fill();
+            ctx.fillStyle = "#e74c3c"; ctx.fillRect(x-2, y-50, 4, 40); ctx.font = "26px serif"; ctx.fillText("🥀", x+3, y-30);
+        }
+        function drawTreeFancy(x, y, r) {
+            ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.beginPath(); ctx.arc(x+r*0.3, y+r*0.3, r, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "#1e5e1e"; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "#2e8b57"; ctx.beginPath(); ctx.arc(x, y, r*0.75, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "#4caf50"; ctx.beginPath(); ctx.arc(x, y, r*0.5, 0, Math.PI*2); ctx.fill();
+        }
+        function drawSwingAnimation() {
+            const angle = Math.atan2(pendingShot.vy, pendingShot.vx); const midPoint = ANIMATION_SPEED / 2; 
+            let swingOffset = (swingFrame < midPoint) ? -2.0 * (swingFrame / midPoint) : -2.0 + ((swingFrame - midPoint) / midPoint * 3.0);
+            ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(angle + swingOffset + Math.PI); 
+            let grad = ctx.createLinearGradient(0, 0, 35, 0); grad.addColorStop(0, "#2c3e50"); grad.addColorStop(1, "#95a5a6");
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(35, 0); ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.strokeStyle = grad; ctx.stroke();
+            ctx.shadowColor = "#00f2fe"; ctx.shadowBlur = 10; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(35, 0); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke(); ctx.shadowBlur = 0; ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(40, 0, 8, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+
+            // ANIME IMPACT FLASH (Only for Driver)
+            if (currentClub === 'driver') {
+                if (swingFrame >= midPoint && swingFrame <= midPoint + 2) {
+                    ctx.save(); ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = 'white'; ctx.fillRect(-100, -100, canvas.width+200, canvas.height+200); ctx.restore();
+                }
+                if (swingFrame >= midPoint && swingFrame < midPoint + 5) {
+                    ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(angle);
+                    ctx.beginPath(); for(let i=0; i<8; i++) { ctx.rotate(Math.PI/4); ctx.moveTo(0,0); ctx.lineTo(60, 0); ctx.lineTo(40, 10); } ctx.fillStyle = "#fff"; ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(800, 0); ctx.lineWidth = 15 - (swingFrame - midPoint)*3; ctx.strokeStyle = "#00f2fe"; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(800, 0); ctx.lineWidth = 5; ctx.strokeStyle = "#ffffff"; ctx.stroke();
+                    ctx.restore();
+                }
+            } else {
+                // Subtle hit for Putter
+                if (swingFrame === midPoint) {
+                    ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.beginPath(); ctx.arc(ball.x, ball.y, 15, 0, Math.PI*2); ctx.fill();
+                }
+            }
+        }
+
+        // --- CELEBRATION ---
+        function startCelebration() {
+            isCelebrating = true; celebrationTimer = 0; particles = [];
+            if (shots === 1) { celebrationText = "HOLE IN ONE! 🥀"; celebrationColor = "#f1c40f"; spawnParticles(200, "rainbow"); }
+            else if (shots <= par - 1) { celebrationText = "BIRDIE!"; celebrationColor = "#00d2d3"; spawnParticles(150, "cool"); }
+            else if (shots === par) { celebrationText = "PAR"; celebrationColor = "#FFFFFF"; spawnParticles(80, "simple"); }
+            else { celebrationText = "BOGEY"; celebrationColor = "#ff6b6b"; spawnParticles(50, "warm"); }
+        }
+        function spawnParticles(count, type) {
+            for (let i = 0; i < count; i++) {
+                let color;
+                if(type === "rainbow") color = `hsl(${Math.random()*360}, 100%, 50%)`;
+                else if(type === "cool") color = `hsl(${180 + Math.random()*60}, 100%, 60%)`;
+                else if(type === "warm") color = `hsl(${0 + Math.random()*40}, 100%, 60%)`;
+                else color = "#fff";
+                particles.push({x: hole.x, y: hole.y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1.0, color: color, size: Math.random()*6+3});
+            }
+        }
+        function updateCelebration() {
+            celebrationTimer++;
+            particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.015; p.size *= 0.95; });
+            particles = particles.filter(p => p.life > 0);
+            if (celebrationTimer > 180) nextLevel();
+        }
+        function drawCelebration() {
+            ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); });
+            ctx.globalAlpha = 1.0;
+            ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
+            let scale = 1 + Math.sin(celebrationTimer * 0.1) * 0.1; ctx.scale(scale, scale);
+            ctx.font = "bold 60px 'Fredoka One', cursive"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.lineWidth = 6; ctx.strokeStyle = "black"; ctx.strokeText(celebrationText, 0, 0);
+            ctx.fillStyle = celebrationColor; ctx.fillText(celebrationText, 0, 0);
+            ctx.restore();
+        }
+
+        // --- INPUT ---
+        function handleStart(e) { if(ball.isMoving || isAnimatingSwing || isCelebrating || isSplashing) return; const c=getScaledCoords(e); isDragging=true; startX=c.x; startY=c.y; currentDragX=startX; currentDragY=startY; }
+        function handleMove(e) { if(!isDragging) return; e.preventDefault(); const c=getScaledCoords(e); currentDragX=c.x; currentDragY=c.y; }
+        function handleEnd(e) { if(!isDragging) return; isDragging=false; const dx=ball.x-currentDragX; const dy=ball.y-currentDragY; const f=Math.hypot(dx,dy); if(f>5) { const club=CLUBS[currentClub]; let a=Math.atan2(dy,dx); a+=(Math.random()-0.5)*club.accuracyError; const s=Math.min(f*club.powerMulti, club.maxSpeed); pendingShot={vx:Math.cos(a)*s, vy:Math.sin(a)*s}; isAnimatingSwing=true; swingFrame=0; } }
+
+        canvas.addEventListener('mousedown', handleStart); canvas.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('touchstart', handleStart, {passive: false}); canvas.addEventListener('touchmove', handleMove, {passive: false}); window.addEventListener('touchend', handleEnd);
+
+        createPatterns();
+        showTitleScreen();
+        function gameLoop() { updatePhysics(); draw(); requestAnimationFrame(gameLoop); }
+        gameLoop();
+    </script>
+</body>
+</html>
